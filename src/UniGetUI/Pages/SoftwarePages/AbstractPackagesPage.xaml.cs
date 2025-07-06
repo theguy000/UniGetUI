@@ -24,10 +24,6 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
-
-namespace UniGetUI.Interface
 {
     public abstract partial class AbstractPackagesPage : IKeyboardShortcutListener, IEnterLeaveListener
     {
@@ -133,11 +129,7 @@ namespace UniGetUI.Interface
 
         protected IPackage? SelectedItem
         {
-            get => (CurrentPackageList.SelectedItem as PackageWrapper)?.Package;
-        }
-
-        protected ItemsView CurrentPackageList
-        {
+            get => (CurrentPackageList.SelectedItest
             get => (ViewModeSelector.SelectedIndex switch
             {
                 1 => PackageList_Grid,
@@ -834,8 +826,8 @@ namespace UniGetUI.Interface
                 }
             }
 
-            FilteredPackages.FromRange(matchingList_selectedSources);
-            UpdatePackageCount();
+           FilteredPackages.FromRange(matchingList_selectedSources);
+           UpdatePackageCount();
 
             if (previousSelection is not null)
             {

@@ -66,49 +66,37 @@ public static partial class DialogHelper
 
     public static MainWindow Window { private get; set; } = null!;
 
-    public static async Task ShowLoadingDialog(string text)
+    public static void ShowLoadingDialog(string text)
     {
-        await ShowLoadingDialog(text, "");
+        ShowLoadingDialog(text, "");
     }
 
-    public static async Task ShowLoadingDialog(string title, string description)
+    public static async void ShowLoadingDialog(string title, string description)
     {
-        await _loadingDialogSemaphore.WaitAsync();
-        try
+        while (Window.LoadingDialogCount == 0 && Window.DialogQueue.Count != 0) await Task.Delay(100);
+
+        if (Window.LoadingDialogCount == 0 && Window.DialogQueue.Count == 0)
         {
-            if (Window.LoadingDialogCount == 0 && Window.DialogQueue.Count == 0)
-            {
-                Window.LoadingSthDalog.Title = title;
-                Window.LoadingSthDalogText.Text = description;
-                Window.LoadingSthDalog.XamlRoot = Window.NavigationPage.XamlRoot;
-                _ = Window.ShowDialogAsync(Window.LoadingSthDalog, HighPriority: true);
-            }
-            Window.LoadingDialogCount++;
+            Window.LoadingSthDalog.Title = title;
+            Window.LoadingSthDalogText.Text = description;
+            Window.LoadingSthDalog.XamlRoot = Window.NavigationPage.XamlRoot;
+            _ = Window.ShowDialogAsync(Window.LoadingSthDalog, HighPriority: true);
         }
-        finally
-        {
-            _loadingDialogSemaphore.Release();
-        }
+
+        Window.LoadingDialogCount++;
     }
 
-    public static async void HideLoadingDialog()
+    public static void HideLoadingDialog()
     {
-        await _loadingDialogSemaphore.WaitAsync();
-        try
+        Window.LoadingDialogCount--;
+        if (Window.LoadingDialogCount <= 0)
         {
-            if (Window.LoadingDialogCount > 0)
-            {
-                Window.LoadingDialogCount--;
-            }
-
-            if (Window.LoadingDialogCount == 0)
-            {
-                Window.LoadingSthDalog.Hide();
-            }
+            Window.LoadingSthDalog.Hide();
         }
-        finally
+
+        if (Window.LoadingDialogCount < 0)
         {
-            _loadingDialogSemaphore.Release();
+            Window.LoadingDialogCount = 0;
         }
     }
 
@@ -401,12 +389,12 @@ public static partial class DialogHelper
         notes.Dispose();
     }
 
-    public static async Task HandleBrokenWinGet()
+    public static async void HandleBrokenWinGet()
     {
         bool bannerWasOpen = false;
         try
         {
-            await ShowLoadingDialog("Attempting to repair WinGet...",
+            ShowLoadingDialog("Attempting to repair WinGet...",
                 "WinGet is being repaired. Please wait until the process finishes.");
             bannerWasOpen = Window.WinGetWarningBanner.IsOpen;
             Window.WinGetWarningBanner.IsOpen = false;

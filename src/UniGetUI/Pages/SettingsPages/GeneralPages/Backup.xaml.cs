@@ -109,10 +109,10 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
             Process.Start("explorer.exe", directory);
         }
 
-        private async void DoBackup_Click(object sender, EventArgs e)
+        private void DoBackup_Click(object sender, EventArgs e)
         {
-            await DialogHelper.ShowLoadingDialog(CoreTools.Translate("Performing backup, please wait..."));
-            await InstalledPackagesPage.BackupPackages();
+            DialogHelper.ShowLoadingDialog(CoreTools.Translate("Performing backup, please wait..."));
+            _ = InstalledPackagesPage.BackupPackages();
             DialogHelper.HideLoadingDialog();
         }
 
@@ -122,7 +122,7 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
             if (pantryId is null)
                 return;
 
-            await DialogHelper.ShowLoadingDialog(CoreTools.Translate("Backing up installed packages to Pantry..."));
+            DialogHelper.ShowLoadingDialog(CoreTools.Translate("Backing up installed packages to Pantry..."));
             try
             {
                 var packages = PEInterface.InstalledPackagesLoader.Packages.ToList();
@@ -136,16 +136,16 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
                 HttpResponseMessage response = await client.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    await ShowSuccessAsync(CoreTools.Translate("Installed packages backed up to Pantry successfully."));
+                    ShowSuccess(CoreTools.Translate("Installed packages backed up to Pantry successfully."));
                 }
                 else
                 {
-                    await ShowErrorAsync(CoreTools.Translate($"Failed to back up to Pantry. Status: {response.StatusCode}"));
+                    ShowError(CoreTools.Translate($"Failed to back up to Pantry. Status: {response.StatusCode}"));
                 }
             }
             catch (Exception ex)
             {
-                await ShowErrorAsync(CoreTools.Translate($"An error occurred: {ex.Message}"));
+                ShowError(CoreTools.Translate($"An error occurred: {ex.Message}"));
             }
             finally
             {
@@ -170,7 +170,7 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
             }
             string bundlePath = Path.Combine(directory, $"PantryBackup_{DateTime.Now:yyyyMMdd_HHmmss}.ubundle");
 
-            await DialogHelper.ShowLoadingDialog(CoreTools.Translate("Downloading bundle from Pantry..."));
+            DialogHelper.ShowLoadingDialog(CoreTools.Translate("Downloading bundle from Pantry..."));
             try
             {
                 HttpRequestMessage request = new(HttpMethod.Get, $"{PANTRY_API_URL}{pantryId}/basket/{BASKET_NAME}");
@@ -181,22 +181,22 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
                     string bundleJson = await response.Content.ReadAsStringAsync();
                     if (string.IsNullOrWhiteSpace(bundleJson) || bundleJson.Trim() == "{}")
                     {
-                        await ShowErrorAsync(CoreTools.Translate("Downloaded bundle is empty or invalid. Please check your Pantry contents."));
+                        ShowError(CoreTools.Translate("Downloaded bundle is empty or invalid. Please check your Pantry contents."));
                         return;
                     }
                     await File.WriteAllTextAsync(bundlePath, bundleJson);
-                    await PackageBundlesPage.OpenBundle(bundlePath);
-                    await ShowSuccessAsync(CoreTools.Translate("Bundle restored and opened successfully."));
+                    PackageBundlesPage.OpenBundle(bundlePath);
+                    ShowSuccess(CoreTools.Translate("Bundle restored and opened successfully."));
                 }
                 else
                 {
                     string errorMessage = await response.Content.ReadAsStringAsync();
-                    await ShowErrorAsync(CoreTools.Translate($"Failed to download bundle: {errorMessage}"));
+                    ShowError(CoreTools.Translate($"Failed to download bundle: {errorMessage}"));
                 }
             }
             catch (Exception ex)
             {
-                await ShowErrorAsync(CoreTools.Translate($"An error occurred: {ex.Message}"));
+                ShowError(CoreTools.Translate($"An error occurred: {ex.Message}"));
             }
             finally
             {
@@ -209,21 +209,21 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
             string pantryId = PantryIdPasswordBox.Password;
             if (string.IsNullOrWhiteSpace(pantryId))
             {
-                await ShowErrorAsync(CoreTools.Translate("Pantry ID cannot be empty."));
+                ShowError(CoreTools.Translate("Pantry ID cannot be empty."));
                 return null;
             }
             Settings.SetValue(Settings.K.PantryId, pantryId);
             return pantryId;
         }
 
-        private Task ShowErrorAsync(string message)
+        private void ShowError(string message)
         {
-            return MainApp.Instance.MainWindow.ShowTeachingTipAsync(CoreTools.Translate("Error"), message, Symbol.ReportHacked, TeachingTipTailVisibility.Collapsed);
+            Debug.WriteLine($"Error: {message}");
         }
 
-        private Task ShowSuccessAsync(string message)
+        private void ShowSuccess(string message)
         {
-            return MainApp.Instance.MainWindow.ShowTeachingTipAsync(CoreTools.Translate("Success"), message, Symbol.Accept, TeachingTipTailVisibility.Collapsed);
+            Debug.WriteLine($"Success: {message}");
         }
     }
 }

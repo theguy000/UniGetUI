@@ -466,10 +466,10 @@ namespace UniGetUI.Interface
             MoreNavButtonMenu.ShowAt(sender as FrameworkElement);
         }
 
-        internal async Task LoadBundleFile(string param)
+        internal void LoadBundleFile(string param)
         {
             NavigateTo(PageType.Bundles);
-            await (BundlesPage?.OpenFromFile(param) ?? Task.CompletedTask);
+            BundlesPage?.OpenFromFile(param);
         }
 
         private void ClearAllFinished_OnClick(object sender, RoutedEventArgs e)

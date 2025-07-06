@@ -343,7 +343,7 @@ namespace UniGetUI.Interface.SoftwarePages
 
         public async Task ImportAndInstallPackage(IReadOnlyList<IPackage> packages, bool? elevated = null, bool? interactive = null, bool? skiphash = null)
         {
-            await DialogHelper.ShowLoadingDialog(CoreTools.Translate("Preparing packages, please wait..."));
+            DialogHelper.ShowLoadingDialog(CoreTools.Translate("Preparing packages, please wait..."));
             List<Package> packages_to_install = [];
             foreach (IPackage package in packages)
             {
@@ -465,7 +465,7 @@ namespace UniGetUI.Interface.SoftwarePages
                         return;
                 }
 
-                await DialogHelper.ShowLoadingDialog(CoreTools.Translate("Loading packages, please wait..."));
+                DialogHelper.ShowLoadingDialog(CoreTools.Translate("Loading packages, please wait..."));
 
                 // Read file
                 BundleFormatType formatType;
@@ -525,7 +525,7 @@ namespace UniGetUI.Interface.SoftwarePages
                 if (file != String.Empty)
                 {
                     // Loading dialog
-                    await DialogHelper.ShowLoadingDialog(CoreTools.Translate("Saving packages, please wait..."));
+                    DialogHelper.ShowLoadingDialog(CoreTools.Translate("Saving packages, please wait..."));
 
                     // Select appropriate format
                     BundleFormatType formatType;
@@ -786,7 +786,7 @@ namespace UniGetUI.Interface.SoftwarePages
         public static async Task OpenBundle(string filePath)
         {
             // Use MainView's LoadBundleFile to navigate and open the bundle
-            await MainApp.Instance.MainWindow.NavigationPage.LoadBundleFile(filePath);
+            MainApp.Instance.MainWindow.NavigationPage.LoadBundleFile(filePath);
         }
     }
 }
