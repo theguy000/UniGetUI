@@ -24,8 +24,9 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
+namespace UniGetUI.Interface
 {
-    public abstract partial class AbstractPackagesPage : IKeyboardShortcutListener, IEnterLeaveListener
+    public abstract partial class AbstractPackagesPage : Page, IKeyboardShortcutListener, IEnterLeaveListener
     {
 
         protected struct PackagesPageData
@@ -129,7 +130,11 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 
         protected IPackage? SelectedItem
         {
-            get => (CurrentPackageList.SelectedItest
+            get => (CurrentPackageList.SelectedItem as PackageWrapper)?.Package;
+        }
+
+        protected ItemsView CurrentPackageList
+        {
             get => (ViewModeSelector.SelectedIndex switch
             {
                 1 => PackageList_Grid,
