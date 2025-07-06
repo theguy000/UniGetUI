@@ -979,7 +979,6 @@ namespace UniGetUI.Interface
         {
             NavigationPage?.NavigateBack();
         }
-
     }
 
     public static class NativeHelpers

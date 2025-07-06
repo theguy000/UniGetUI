@@ -197,6 +197,7 @@ public static partial class DialogHelper
 
             HideLoadingDialog();
             await Window.ShowDialogAsync(warningDialog);
+
         }
     }
 

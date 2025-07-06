@@ -24,6 +24,9 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
 namespace UniGetUI.Interface
 {
     public abstract partial class AbstractPackagesPage : Page, IKeyboardShortcutListener, IEnterLeaveListener

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Threading;
 using Windows.UI;
 using Microsoft.UI;
 using Microsoft.UI.Text;
