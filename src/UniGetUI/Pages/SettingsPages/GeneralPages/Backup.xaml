@@ -126,6 +126,13 @@
                 CornerRadius="0,0,8,8"
                 Text="Restore package bundle from Pantry" />
 
+            <ProgressBar
+                x:Name="PantryValidationProgressBar"
+                MinWidth="200"
+                Margin="0,8,0,0"
+                IsIndeterminate="True"
+                Visibility="Collapsed" />
+
         </StackPanel>
     </ScrollViewer>
 </Page>

@@ -109,10 +109,10 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
             Process.Start("explorer.exe", directory);
         }
 
-        private void DoBackup_Click(object sender, EventArgs e)
+        private async void DoBackup_Click(object sender, EventArgs e)
         {
             DialogHelper.ShowLoadingDialog(CoreTools.Translate("Performing backup, please wait..."));
-            _ = InstalledPackagesPage.BackupPackages();
+            await InstalledPackagesPage.BackupPackages();
             DialogHelper.HideLoadingDialog();
         }
 
@@ -133,19 +133,34 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
                     Content = new StringContent(bundleJson, Encoding.UTF8, "application/json")
                 };
 
-                HttpResponseMessage response = await client.SendAsync(request);
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    ShowSuccess(CoreTools.Translate("Installed packages backed up to Pantry successfully."));
+                    HttpResponseMessage response = await client.SendAsync(request);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var successDialog = new ContentDialog
+                        {
+                            Title = CoreTools.Translate("Success"),
+                            Content = CoreTools.Translate("Installed packages backed up to Pantry successfully."),
+                            PrimaryButtonText = CoreTools.Translate("OK"),
+                            DefaultButton = ContentDialogButton.Primary,
+                            XamlRoot = this.XamlRoot
+                        };
+                        await successDialog.ShowAsync();
+                    }
+                    else
+                    {
+                        await ShowErrorDialog(CoreTools.Translate($"Failed to back up to Pantry. Status: {response.StatusCode}"));
+                    }
                 }
-                else
+                catch (HttpRequestException ex)
                 {
-                    ShowError(CoreTools.Translate($"Failed to back up to Pantry. Status: {response.StatusCode}"));
+                    await ShowErrorDialog(CoreTools.Translate($"An error occurred: {ex.Message}"));
                 }
             }
             catch (Exception ex)
             {
-                ShowError(CoreTools.Translate($"An error occurred: {ex.Message}"));
+                await ShowErrorDialog(CoreTools.Translate($"An error occurred: {ex.Message}"));
             }
             finally
             {
@@ -173,30 +188,45 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
             DialogHelper.ShowLoadingDialog(CoreTools.Translate("Downloading bundle from Pantry..."));
             try
             {
-                HttpRequestMessage request = new(HttpMethod.Get, $"{PANTRY_API_URL}{pantryId}/basket/{BASKET_NAME}");
-                HttpResponseMessage response = await client.SendAsync(request);
+                try
+                {
+                    HttpRequestMessage request = new(HttpMethod.Get, $"{PANTRY_API_URL}{pantryId}/basket/{BASKET_NAME}");
+                    HttpResponseMessage response = await client.SendAsync(request);
 
-                if (response.IsSuccessStatusCode)
-                {
-                    string bundleJson = await response.Content.ReadAsStringAsync();
-                    if (string.IsNullOrWhiteSpace(bundleJson) || bundleJson.Trim() == "{}")
+                    if (response.IsSuccessStatusCode)
                     {
-                        ShowError(CoreTools.Translate("Downloaded bundle is empty or invalid. Please check your Pantry contents."));
-                        return;
+                        string bundleJson = await response.Content.ReadAsStringAsync();
+                        if (string.IsNullOrWhiteSpace(bundleJson) || bundleJson.Trim() == "{}")
+                        {
+                            await ShowErrorDialog(CoreTools.Translate("Downloaded bundle is empty or invalid. Please check your Pantry contents."));
+                            return;
+                        }
+                        await File.WriteAllTextAsync(bundlePath, bundleJson);
+                        PackageBundlesPage.OpenBundle(bundlePath);
+                        var successDialog = new ContentDialog
+                        {
+                            Title = CoreTools.Translate("Success"),
+                            Content = CoreTools.Translate("Bundle restored and opened successfully."),
+                            PrimaryButtonText = CoreTools.Translate("OK"),
+                            DefaultButton = ContentDialogButton.Primary,
+                            XamlRoot = this.XamlRoot
+                        };
+                        await successDialog.ShowAsync();
                     }
-                    await File.WriteAllTextAsync(bundlePath, bundleJson);
-                    PackageBundlesPage.OpenBundle(bundlePath);
-                    ShowSuccess(CoreTools.Translate("Bundle restored and opened successfully."));
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        await ShowErrorDialog(CoreTools.Translate($"Failed to download bundle: {errorMessage}"));
+                    }
                 }
-                else
+                catch (HttpRequestException ex)
                 {
-                    string errorMessage = await response.Content.ReadAsStringAsync();
-                    ShowError(CoreTools.Translate($"Failed to download bundle: {errorMessage}"));
+                    await ShowErrorDialog(CoreTools.Translate($"An error occurred: {ex.Message}"));
                 }
             }
             catch (Exception ex)
             {
-                ShowError(CoreTools.Translate($"An error occurred: {ex.Message}"));
+                await ShowErrorDialog(CoreTools.Translate($"An error occurred: {ex.Message}"));
             }
             finally
             {
@@ -209,21 +239,55 @@ namespace UniGetUI.Pages.SettingsPages.GeneralPages
             string pantryId = PantryIdPasswordBox.Password;
             if (string.IsNullOrWhiteSpace(pantryId))
             {
-                ShowError(CoreTools.Translate("Pantry ID cannot be empty."));
+                await ShowErrorDialog(CoreTools.Translate("Pantry ID cannot be empty."));
                 return null;
             }
+
+            PantryValidationProgressBar.Visibility = Visibility.Visible;
+            BackupToPantryButton.IsEnabled = false;
+            RestoreBundleFromPantryButton.IsEnabled = false;
+
+            bool isValid = await IsPantryApiKeyValid(pantryId);
+
+            PantryValidationProgressBar.Visibility = Visibility.Collapsed;
+            BackupToPantryButton.IsEnabled = true;
+            RestoreBundleFromPantryButton.IsEnabled = true;
+
+            if (!isValid)
+            {
+                await ShowErrorDialog(CoreTools.Translate("The provided Pantry API key is invalid. Please check it and try again."));
+                return null;
+            }
+
             Settings.SetValue(Settings.K.PantryId, pantryId);
             return pantryId;
         }
 
-        private void ShowError(string message)
+        private async Task<bool> IsPantryApiKeyValid(string pantryId)
         {
-            Debug.WriteLine($"Error: {message}");
+            try
+            {
+                HttpRequestMessage request = new(HttpMethod.Get, $"{PANTRY_API_URL}{pantryId}");
+                HttpResponseMessage response = await client.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException)
+            {
+                return false;
+            }
         }
 
-        private void ShowSuccess(string message)
+        private async Task ShowErrorDialog(string message)
         {
-            Debug.WriteLine($"Success: {message}");
+            var errorDialog = new ContentDialog
+            {
+                Title = CoreTools.Translate("Error"),
+                Content = message,
+                PrimaryButtonText = CoreTools.Translate("OK"),
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+            await errorDialog.ShowAsync();
         }
     }
 }

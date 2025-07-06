@@ -359,6 +359,7 @@ namespace UniGetUI.Interface.SoftwarePages
             DialogHelper.ShowLoadingDialog(CoreTools.Translate("Please wait..."));
             await PEInterface.PackageBundlesLoader.AddPackagesAsync(FilteredPackages.GetCheckedPackages());
             DialogHelper.HideLoadingDialog();
+
         }
 
         public static async Task BackupPackages()
