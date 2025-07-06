@@ -23,8 +23,6 @@ namespace UniGetUI.Pages.DialogPages;
 
 public static partial class DialogHelper
 {
-    private static readonly SemaphoreSlim _loadingDialogSemaphore = new(1, 1);
-
     private static class DialogFactory
     {
         public static ContentDialog Create()
